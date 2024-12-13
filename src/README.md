@@ -6,7 +6,7 @@ tags:
   - provider/grafana
 ---
 
-# Component: `managed`
+# Component: `managed-grafana-dashboard`
 
 This component is responsible for provisioning a dashboard an Amazon Managed Grafana workspace.
 
