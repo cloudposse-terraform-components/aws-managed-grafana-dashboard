@@ -75,8 +75,8 @@ components:
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_config_json"></a> [config\_json](#module\_config\_json) | cloudposse/config/yaml//modules/deepmerge | 1.0.2 |
-| <a name="module_grafana"></a> [grafana](#module\_grafana) | cloudposse/stack-config/yaml//modules/remote-state | 1.5.0 |
-| <a name="module_grafana_api_key"></a> [grafana\_api\_key](#module\_grafana\_api\_key) | cloudposse/stack-config/yaml//modules/remote-state | 1.5.0 |
+| <a name="module_grafana"></a> [grafana](#module\_grafana) | cloudposse/stack-config/yaml//modules/remote-state | 1.8.0 |
+| <a name="module_grafana_api_key"></a> [grafana\_api\_key](#module\_grafana\_api\_key) | cloudposse/stack-config/yaml//modules/remote-state | 1.8.0 |
 | <a name="module_iam_roles"></a> [iam\_roles](#module\_iam\_roles) | ../../account-map/modules/iam-roles | n/a |
 | <a name="module_this"></a> [this](#module\_this) | cloudposse/label/null | 0.25.0 |
 
