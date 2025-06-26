@@ -58,7 +58,7 @@ components:
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 4.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 4.0, < 6.0.0 |
 | <a name="requirement_grafana"></a> [grafana](#requirement\_grafana) | >= 2.18.0 |
 | <a name="requirement_http"></a> [http](#requirement\_http) | >= 3.4.2 |
 
@@ -66,7 +66,7 @@ components:
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 4.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 4.0, < 6.0.0 |
 | <a name="provider_grafana"></a> [grafana](#provider\_grafana) | >= 2.18.0 |
 | <a name="provider_http"></a> [http](#provider\_http) | >= 3.4.2 |
 
