@@ -52,8 +52,10 @@ This component is responsible for provisioning a dashboard in an Amazon Managed 
 
 **Stack Level**: Regional
 
-> [!NOTE]
-> This component requires OpenTofu 1.7+ for the `templatestring()` function used to substitute variables in dashboard JSON.
+> [!WARNING]
+> This component requires **OpenTofu 1.7+** and is **not compatible with Terraform**.
+> The `templatestring()` function used for variable substitution is OpenTofu-specific.
+> Terraform users will encounter errors like `Function not found: templatestring`.
 
 ### Loading a Dashboard from URL
 
