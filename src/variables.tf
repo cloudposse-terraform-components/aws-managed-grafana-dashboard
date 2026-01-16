@@ -16,8 +16,18 @@ variable "dashboard_url" {
 
 variable "dashboard_file" {
   type        = string
-  description = "Path to a local dashboard JSON file relative to the component's dashboards directory. Either this or dashboard_url must be set."
+  description = "Filename of a local dashboard JSON file in the component's dashboards directory. Must be a simple filename (no path separators). Either this or dashboard_url must be set."
   default     = ""
+
+  validation {
+    condition     = !can(regex("\\.\\.", var.dashboard_file))
+    error_message = "The dashboard_file must not contain path traversal sequences (..)."
+  }
+
+  validation {
+    condition     = var.dashboard_file == "" || can(regex("^[A-Za-z0-9_-]+\\.json$", var.dashboard_file))
+    error_message = "The dashboard_file must be a simple filename matching the pattern [A-Za-z0-9_-]+.json (e.g., 'my-dashboard.json')."
+  }
 }
 
 variable "additional_config" {
