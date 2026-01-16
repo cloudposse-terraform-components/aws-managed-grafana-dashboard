@@ -17,6 +17,18 @@ locals {
   config_json = local.enabled ? templatestring(jsonencode(module.config_json[0].merged), var.config_input) : "{}"
 }
 
+# Validate that exactly one of dashboard_url or dashboard_file is set
+resource "terraform_data" "input_validation" {
+  count = local.enabled ? 1 : 0
+
+  lifecycle {
+    precondition {
+      condition     = (local.use_url && !local.use_file) || (!local.use_url && local.use_file)
+      error_message = "Exactly one of dashboard_url or dashboard_file must be set, but not both."
+    }
+  }
+}
+
 data "http" "grafana_dashboard_json" {
   count = local.enabled && local.use_url ? 1 : 0
 
