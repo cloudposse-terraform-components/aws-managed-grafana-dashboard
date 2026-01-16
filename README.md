@@ -52,7 +52,8 @@ This component is responsible for provisioning a dashboard in an Amazon Managed 
 
 **Stack Level**: Regional
 
-**Note**: This component requires OpenTofu 1.7+ for the `templatestring()` function used to substitute variables in dashboard JSON.
+> [!NOTE]
+> This component requires OpenTofu 1.7+ for the `templatestring()` function used to substitute variables in dashboard JSON.
 
 ### Loading a Dashboard from URL
 
