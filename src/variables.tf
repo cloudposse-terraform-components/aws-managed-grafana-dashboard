@@ -10,7 +10,14 @@ variable "dashboard_name" {
 
 variable "dashboard_url" {
   type        = string
-  description = "The marketplace URL of the dashboard to be created"
+  description = "The marketplace URL of the dashboard to be created. Either this or dashboard_file must be set."
+  default     = ""
+}
+
+variable "dashboard_file" {
+  type        = string
+  description = "Path to a local dashboard JSON file relative to the component's dashboards directory. Either this or dashboard_url must be set."
+  default     = ""
 }
 
 variable "additional_config" {

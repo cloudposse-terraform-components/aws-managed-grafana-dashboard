@@ -7,7 +7,11 @@ description: |-
 usage: |-
   **Stack Level**: Regional
 
-  Here's an example snippet for how to use this component.
+  **Note**: This component requires OpenTofu 1.7+ for the `templatestring()` function used to substitute variables in dashboard JSON.
+
+  ### Loading a Dashboard from URL
+
+  Here's an example snippet for loading a dashboard from the Grafana marketplace.
 
   ```yaml
   components:
@@ -24,6 +28,31 @@ usage: |-
           config_input:
             "${DS_PROMETHEUS}": "acme-plat-ue2-sandbox-prometheus" # Input Value : Data source UID
   ```
+
+  ### Loading a Dashboard from Local File
+
+  You can also load dashboards from local JSON files stored in the `dashboards/` directory within the component.
+
+  ```yaml
+  components:
+    terraform:
+      grafana/dashboard/ecs:
+        metadata:
+          component: managed-grafana/dashboard
+        vars:
+          enabled: true
+          name: "ecs-dashboard"
+          grafana_component_name: grafana
+          grafana_api_key_component_name: grafana/api-key
+          dashboard_file: "ecs.json"
+          config_input:
+            "${DS_CLOUDWATCH}": "acme-plat-ue2-sandbox-cloudwatch"
+  ```
+
+  ### Variable Substitution
+
+  The `config_input` variable accepts a map of string replacements. These are applied using OpenTofu's `templatestring()` function,
+  which replaces `${VAR}` placeholders in the dashboard JSON with the corresponding values.
 
   <!-- prettier-ignore-start -->
   <!-- prettier-ignore-end -->

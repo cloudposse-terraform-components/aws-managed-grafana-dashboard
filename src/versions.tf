@@ -1,5 +1,6 @@
 terraform {
-  required_version = ">= 1.0.0"
+  # Requires OpenTofu 1.7+ for templatestring() function
+  required_version = ">= 1.7.0"
 
   required_providers {
     aws = {

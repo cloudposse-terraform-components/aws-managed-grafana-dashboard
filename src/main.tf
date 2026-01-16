@@ -1,12 +1,22 @@
 locals {
   enabled = module.this.enabled
 
-  # Replace each of the keys in var.config_input with the given value in the module.config_json[0].merged result
-  config_json = join("", [for k in keys(var.config_input) : replace(jsonencode(module.config_json[0].merged), k, var.config_input[k])])
+  # Determine if using URL or local file
+  use_url  = var.dashboard_url != ""
+  use_file = var.dashboard_file != ""
+
+  # Load dashboard JSON from either URL or local file
+  dashboard_json_raw = local.use_url ? data.http.grafana_dashboard_json[0].response_body : (
+    local.use_file ? file("${path.module}/dashboards/${var.dashboard_file}") : "{}"
+  )
+
+  # Apply variable substitutions from config_input to the merged JSON
+  # Uses templatestring() to replace ${VAR} placeholders with values (OpenTofu 1.7+)
+  config_json = templatestring(jsonencode(module.config_json[0].merged), var.config_input)
 }
 
 data "http" "grafana_dashboard_json" {
-  count = local.enabled ? 1 : 0
+  count = local.enabled && local.use_url ? 1 : 0
 
   url = var.dashboard_url
 }
@@ -18,7 +28,7 @@ module "config_json" {
   count = local.enabled ? 1 : 0
 
   maps = [
-    jsondecode(data.http.grafana_dashboard_json[0].response_body),
+    jsondecode(local.dashboard_json_raw),
     {
       "title" : var.dashboard_name,
       "uid" : var.dashboard_name,
