@@ -12,6 +12,11 @@ variable "dashboard_url" {
   type        = string
   description = "The marketplace URL of the dashboard to be created. Either this or dashboard_file must be set."
   default     = ""
+
+  validation {
+    condition     = (var.dashboard_url != "" && var.dashboard_file == "") || (var.dashboard_url == "" && var.dashboard_file != "")
+    error_message = "Exactly one of dashboard_url or dashboard_file must be set, but not both."
+  }
 }
 
 variable "dashboard_file" {
