@@ -10,7 +10,29 @@ variable "dashboard_name" {
 
 variable "dashboard_url" {
   type        = string
-  description = "The marketplace URL of the dashboard to be created"
+  description = "The marketplace URL of the dashboard to be created. Either this or dashboard_file must be set."
+  default     = ""
+
+  validation {
+    condition     = (var.dashboard_url != "" && var.dashboard_file == "") || (var.dashboard_url == "" && var.dashboard_file != "")
+    error_message = "Exactly one of dashboard_url or dashboard_file must be set, but not both."
+  }
+}
+
+variable "dashboard_file" {
+  type        = string
+  description = "Filename of a local dashboard JSON file in the component's dashboards directory. Must be a simple filename (no path separators). Either this or dashboard_url must be set."
+  default     = ""
+
+  validation {
+    condition     = !can(regex("\\.\\.", var.dashboard_file))
+    error_message = "The dashboard_file must not contain path traversal sequences (..)."
+  }
+
+  validation {
+    condition     = var.dashboard_file == "" || can(regex("^[A-Za-z0-9_-]+\\.json$", var.dashboard_file))
+    error_message = "The dashboard_file must be a simple filename matching the pattern [A-Za-z0-9_-]+.json (e.g., 'my-dashboard.json')."
+  }
 }
 
 variable "additional_config" {
