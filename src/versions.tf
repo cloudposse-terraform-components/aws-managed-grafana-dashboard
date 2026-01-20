@@ -1,8 +1,7 @@
 terraform {
-  # IMPORTANT: This component requires OpenTofu 1.7+ and is NOT compatible with Terraform.
-  # The templatestring() function used for variable substitution is OpenTofu-specific.
-  # Terraform users will encounter errors like "Function not found: templatestring".
+  # This component requires OpenTofu 1.7+ or Terraform 1.9+ for the templatestring() function.
   # See: https://opentofu.org/docs/language/functions/templatestring/
+  # See: https://developer.hashicorp.com/terraform/language/functions/templatestring
   required_version = ">= 1.7.0"
 
   required_providers {

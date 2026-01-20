@@ -13,7 +13,13 @@ This component is responsible for provisioning a dashboard in an Amazon Managed 
 
 **Stack Level**: Regional
 
-Here's an example snippet for how to use this component.
+> [!NOTE]
+> This component requires **OpenTofu 1.7+** or **Terraform 1.9+** for the `templatestring()` function.
+> Earlier versions will encounter errors like `Function not found: templatestring`.
+
+### Loading a Dashboard from URL
+
+Here's an example snippet for loading a dashboard from the Grafana marketplace.
 
 ```yaml
 components:
@@ -31,6 +37,31 @@ components:
           "${DS_PROMETHEUS}": "acme-plat-ue2-sandbox-prometheus" # Input Value : Data source UID
 ```
 
+### Loading a Dashboard from Local File
+
+You can also load dashboards from local JSON files stored in the `dashboards/` directory within the component.
+
+```yaml
+components:
+  terraform:
+    grafana/dashboard/ecs:
+      metadata:
+        component: managed-grafana/dashboard
+      vars:
+        enabled: true
+        name: "ecs-dashboard"
+        grafana_component_name: grafana
+        grafana_api_key_component_name: grafana/api-key
+        dashboard_file: "ecs.json"
+        config_input:
+          "${DS_CLOUDWATCH}": "acme-plat-ue2-sandbox-cloudwatch"
+```
+
+### Variable Substitution
+
+The `config_input` variable accepts a map of string replacements. These are applied using the `templatestring()` function,
+which replaces `${VAR}` placeholders in the dashboard JSON with the corresponding values.
+
 <!-- prettier-ignore-start -->
 <!-- prettier-ignore-end -->
 
@@ -40,7 +71,7 @@ components:
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.7.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 4.0, < 6.0.0 |
 | <a name="requirement_grafana"></a> [grafana](#requirement\_grafana) | >= 2.18.0 |
 | <a name="requirement_http"></a> [http](#requirement\_http) | >= 3.4.2 |
@@ -80,8 +111,9 @@ components:
 | <a name="input_attributes"></a> [attributes](#input\_attributes) | ID element. Additional attributes (e.g. `workers` or `cluster`) to add to `id`,<br/>in the order they appear in the list. New attributes are appended to the<br/>end of the list. The elements of the list are joined by the `delimiter`<br/>and treated as a single ID element. | `list(string)` | `[]` | no |
 | <a name="input_config_input"></a> [config\_input](#input\_config\_input) | A map of string replacements used to supply input for the dashboard config JSON | `map(string)` | `{}` | no |
 | <a name="input_context"></a> [context](#input\_context) | Single object for setting entire context at once.<br/>See description of individual variables for details.<br/>Leave string and numeric variables as `null` to use default value.<br/>Individual variable settings (non-null) override settings in context object,<br/>except for attributes, tags, and additional\_tag\_map, which are merged. | `any` | <pre>{<br/>  "additional_tag_map": {},<br/>  "attributes": [],<br/>  "delimiter": null,<br/>  "descriptor_formats": {},<br/>  "enabled": true,<br/>  "environment": null,<br/>  "id_length_limit": null,<br/>  "label_key_case": null,<br/>  "label_order": [],<br/>  "label_value_case": null,<br/>  "labels_as_tags": [<br/>    "unset"<br/>  ],<br/>  "name": null,<br/>  "namespace": null,<br/>  "regex_replace_chars": null,<br/>  "stage": null,<br/>  "tags": {},<br/>  "tenant": null<br/>}</pre> | no |
+| <a name="input_dashboard_file"></a> [dashboard\_file](#input\_dashboard\_file) | Filename of a local dashboard JSON file in the component's dashboards directory. Must be a simple filename (no path separators). Either this or dashboard\_url must be set. | `string` | `""` | no |
 | <a name="input_dashboard_name"></a> [dashboard\_name](#input\_dashboard\_name) | The name to use for the dashboard. This must be unique. | `string` | n/a | yes |
-| <a name="input_dashboard_url"></a> [dashboard\_url](#input\_dashboard\_url) | The marketplace URL of the dashboard to be created | `string` | n/a | yes |
+| <a name="input_dashboard_url"></a> [dashboard\_url](#input\_dashboard\_url) | The marketplace URL of the dashboard to be created. Either this or dashboard\_file must be set. | `string` | `""` | no |
 | <a name="input_delimiter"></a> [delimiter](#input\_delimiter) | Delimiter to be used between ID elements.<br/>Defaults to `-` (hyphen). Set to `""` to use no delimiter at all. | `string` | `null` | no |
 | <a name="input_descriptor_formats"></a> [descriptor\_formats](#input\_descriptor\_formats) | Describe additional descriptors to be output in the `descriptors` output map.<br/>Map of maps. Keys are names of descriptors. Values are maps of the form<br/>`{<br/>  format = string<br/>  labels = list(string)<br/>}`<br/>(Type is `any` so the map values can later be enhanced to provide additional options.)<br/>`format` is a Terraform format string to be passed to the `format()` function.<br/>`labels` is a list of labels, in order, to pass to `format()` function.<br/>Label values will be normalized before being passed to `format()` so they will be<br/>identical to how they appear in `id`.<br/>Default is `{}` (`descriptors` output will be empty). | `any` | `{}` | no |
 | <a name="input_enabled"></a> [enabled](#input\_enabled) | Set to false to prevent the module from creating any resources | `bool` | `null` | no |
@@ -117,4 +149,3 @@ No outputs.
 
 
 [<img src="https://cloudposse.com/logo-300x69.svg" height="32" align="right"/>](https://cpco.io/homepage?utm_source=github&utm_medium=readme&utm_campaign=cloudposse-terraform-components/aws-managed-grafana-dashboard&utm_content=)
-

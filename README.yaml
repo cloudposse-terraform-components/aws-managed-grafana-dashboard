@@ -7,10 +7,9 @@ description: |-
 usage: |-
   **Stack Level**: Regional
 
-  > [!WARNING]
-  > This component requires **OpenTofu 1.7+** and is **not compatible with Terraform**.
-  > The `templatestring()` function used for variable substitution is OpenTofu-specific.
-  > Terraform users will encounter errors like `Function not found: templatestring`.
+  > [!NOTE]
+  > This component requires **OpenTofu 1.7+** or **Terraform 1.9+** for the `templatestring()` function.
+  > Earlier versions will encounter errors like `Function not found: templatestring`.
 
   ### Loading a Dashboard from URL
 
@@ -54,7 +53,7 @@ usage: |-
 
   ### Variable Substitution
 
-  The `config_input` variable accepts a map of string replacements. These are applied using OpenTofu's `templatestring()` function,
+  The `config_input` variable accepts a map of string replacements. These are applied using the `templatestring()` function,
   which replaces `${VAR}` placeholders in the dashboard JSON with the corresponding values.
 
   <!-- prettier-ignore-start -->
