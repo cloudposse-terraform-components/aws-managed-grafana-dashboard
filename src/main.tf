@@ -7,9 +7,8 @@ locals {
 
   # Load dashboard JSON from either URL or local file
   # Only access data.http when enabled and using URL (count > 0)
-  dashboard_json_raw = local.enabled && local.use_url ? data.http.grafana_dashboard_json[0].response_body : (
-    local.use_file ? file("${path.module}/dashboards/${var.dashboard_file}") : "{}"
-  )
+  # Top-level guard on local.enabled prevents file() from being evaluated when disabled
+  dashboard_json_raw = local.enabled ? (local.use_url ? data.http.grafana_dashboard_json[0].response_body : (local.use_file ? file("${path.module}/dashboards/${var.dashboard_file}") : "{}")) : "{}"
 
   # Apply variable substitutions from config_input to the merged JSON
   # Uses templatestring() to replace ${VAR} placeholders with values (OpenTofu 1.7+)
