@@ -56,9 +56,20 @@ This component is responsible for provisioning a dashboard in an Amazon Managed 
 > This component requires **OpenTofu 1.7+** or **Terraform 1.9+** for the `templatestring()` function.
 > Earlier versions will encounter errors like `Function not found: templatestring`.
 
+## Dashboard Configuration Methods
+
+This component supports three mutually exclusive methods for providing dashboard configuration.
+**Exactly one** of `dashboard_url`, `dashboard_file`, or `dashboard_yaml` must be set.
+
+| Method | Use Case |
+|--------|----------|
+| `dashboard_url` | Load dashboards from remote URLs (e.g., Grafana marketplace) |
+| `dashboard_file` | Load dashboards from local JSON files in the `dashboards/` directory |
+| `dashboard_yaml` | Define dashboards inline in Atmos stack configuration using YAML |
+
 ### Loading a Dashboard from URL
 
-Here's an example snippet for loading a dashboard from the Grafana marketplace.
+Use `dashboard_url` to load a dashboard from a remote endpoint such as the Grafana marketplace.
 
 ```yaml
 components:
@@ -78,7 +89,7 @@ components:
 
 ### Loading a Dashboard from Local File
 
-You can also load dashboards from local JSON files stored in the `dashboards/` directory within the component.
+Use `dashboard_file` to load dashboards from local JSON files stored in the `dashboards/` directory within the component.
 
 ```yaml
 components:
@@ -96,10 +107,156 @@ components:
           "${DS_CLOUDWATCH}": "acme-plat-ue2-sandbox-cloudwatch"
 ```
 
+### Defining a Dashboard with YAML (Atmos Native)
+
+Use `dashboard_yaml` to define the dashboard configuration directly in your Atmos stack files. This is the
+recommended Atmos-native approach as it enables:
+
+- **Deep merging**: Compose dashboards from multiple stack layers
+- **Inheritance**: Define base dashboard configurations and extend them
+- **Atmos functions**: Use `!terraform.output`, `!atmos.component`, and other Atmos template functions
+
+```yaml
+components:
+  terraform:
+    grafana/dashboard/custom:
+      metadata:
+        component: managed-grafana/dashboard
+      vars:
+        enabled: true
+        name: "custom-dashboard"
+        grafana_component_name: grafana
+        grafana_api_key_component_name: grafana/api-key
+        dashboard_yaml:
+          annotations:
+            list:
+              - builtIn: 1
+                datasource:
+                  type: grafana
+                  uid: "-- Grafana --"
+                enable: true
+                hide: true
+                iconColor: "rgba(0, 211, 255, 1)"
+                name: Annotations & Alerts
+                type: dashboard
+          editable: true
+          fiscalYearStartMonth: 0
+          graphTooltip: 0
+          panels:
+            - datasource:
+                type: cloudwatch
+                uid: "${DS_CLOUDWATCH}"
+              fieldConfig:
+                defaults:
+                  color:
+                    mode: palette-classic
+                  thresholds:
+                    mode: absolute
+                    steps:
+                      - color: green
+                        value: null
+                      - color: red
+                        value: 80
+                overrides: []
+              gridPos:
+                h: 8
+                w: 12
+                x: 0
+                y: 0
+              id: 1
+              options:
+                legend:
+                  calcs: []
+                  displayMode: list
+                  placement: bottom
+                  showLegend: true
+                tooltip:
+                  mode: single
+                  sort: none
+              targets:
+                - datasource:
+                    type: cloudwatch
+                    uid: "${DS_CLOUDWATCH}"
+                  dimensions:
+                    ClusterName: my-cluster
+                  expression: ""
+                  id: ""
+                  matchExact: true
+                  metricEditorMode: 0
+                  metricName: CPUUtilization
+                  metricQueryType: 0
+                  namespace: AWS/ECS
+                  period: ""
+                  queryMode: Metrics
+                  refId: A
+                  region: default
+                  statistic: Average
+              title: ECS CPU Utilization
+              type: timeseries
+          refresh: ""
+          schemaVersion: 39
+          templating:
+            list: []
+          time:
+            from: now-6h
+            to: now
+          timepicker: {}
+          timezone: browser
+        config_input:
+          "${DS_CLOUDWATCH}": "acme-plat-ue2-sandbox-cloudwatch"
+```
+
+#### Using Inheritance with `dashboard_yaml`
+
+Define a base dashboard in your catalog and extend it in environment-specific stacks:
+
+```yaml
+# stacks/catalog/grafana/dashboards/base.yaml
+components:
+  terraform:
+    grafana/dashboard/base:
+      metadata:
+        component: managed-grafana/dashboard
+        type: abstract
+      vars:
+        grafana_component_name: grafana
+        grafana_api_key_component_name: grafana/api-key
+        dashboard_yaml:
+          editable: true
+          schemaVersion: 39
+          time:
+            from: now-6h
+            to: now
+          timezone: browser
+```
+
+```yaml
+# stacks/orgs/acme/plat/sandbox/us-east-2/grafana.yaml
+import:
+  - catalog/grafana/dashboards/base
+
+components:
+  terraform:
+    grafana/dashboard/ecs-metrics:
+      metadata:
+        component: managed-grafana/dashboard
+        inherits:
+          - grafana/dashboard/base
+      vars:
+        enabled: true
+        name: "ecs-metrics"
+        dashboard_yaml:
+          panels:
+            - title: ECS CPU
+              type: timeseries
+              # ... panel configuration
+```
+
 ### Variable Substitution
 
 The `config_input` variable accepts a map of string replacements. These are applied using the `templatestring()` function,
-which replaces `${VAR}` placeholders in the dashboard JSON with the corresponding values.
+which replaces `${VAR}` placeholders in the dashboard configuration with the corresponding values. This works with all
+three dashboard configuration methods.
 
 <!-- prettier-ignore-start -->
 <!-- prettier-ignore-end -->
@@ -162,9 +319,10 @@ which replaces `${VAR}` placeholders in the dashboard JSON with the correspondin
 | <a name="input_attributes"></a> [attributes](#input\_attributes) | ID element. Additional attributes (e.g. `workers` or `cluster`) to add to `id`,<br/>in the order they appear in the list. New attributes are appended to the<br/>end of the list. The elements of the list are joined by the `delimiter`<br/>and treated as a single ID element. | `list(string)` | `[]` | no |
 | <a name="input_config_input"></a> [config\_input](#input\_config\_input) | A map of string replacements used to supply input for the dashboard config JSON | `map(string)` | `{}` | no |
 | <a name="input_context"></a> [context](#input\_context) | Single object for setting entire context at once.<br/>See description of individual variables for details.<br/>Leave string and numeric variables as `null` to use default value.<br/>Individual variable settings (non-null) override settings in context object,<br/>except for attributes, tags, and additional\_tag\_map, which are merged. | `any` | <pre>{<br/>  "additional_tag_map": {},<br/>  "attributes": [],<br/>  "delimiter": null,<br/>  "descriptor_formats": {},<br/>  "enabled": true,<br/>  "environment": null,<br/>  "id_length_limit": null,<br/>  "label_key_case": null,<br/>  "label_order": [],<br/>  "label_value_case": null,<br/>  "labels_as_tags": [<br/>    "unset"<br/>  ],<br/>  "name": null,<br/>  "namespace": null,<br/>  "regex_replace_chars": null,<br/>  "stage": null,<br/>  "tags": {},<br/>  "tenant": null<br/>}</pre> | no |
-| <a name="input_dashboard_file"></a> [dashboard\_file](#input\_dashboard\_file) | Filename of a local dashboard JSON file in the component's dashboards directory. Must be a simple filename (no path separators). Either this or dashboard\_url must be set. | `string` | `""` | no |
+| <a name="input_dashboard_file"></a> [dashboard\_file](#input\_dashboard\_file) | Filename of a local dashboard JSON file in the component's dashboards directory. Must be a simple filename (no path separators). Exactly one of `dashboard_url`, `dashboard_file`, or `dashboard_yaml` must be set. | `string` | `""` | no |
 | <a name="input_dashboard_name"></a> [dashboard\_name](#input\_dashboard\_name) | The name to use for the dashboard. This must be unique. | `string` | n/a | yes |
-| <a name="input_dashboard_url"></a> [dashboard\_url](#input\_dashboard\_url) | The marketplace URL of the dashboard to be created. Either this or dashboard\_file must be set. | `string` | `""` | no |
+| <a name="input_dashboard_url"></a> [dashboard\_url](#input\_dashboard\_url) | The marketplace URL of the dashboard to be created. Exactly one of `dashboard_url`, `dashboard_file`, or `dashboard_yaml` must be set. | `string` | `""` | no |
+| <a name="input_dashboard_yaml"></a> [dashboard\_yaml](#input\_dashboard\_yaml) | Dashboard configuration defined as YAML/HCL in Atmos stack configuration. This allows defining dashboards inline using Atmos features like deep merging, inheritance, and Atmos functions. Exactly one of `dashboard_url`, `dashboard_file`, or `dashboard_yaml` must be set. | `any` | `null` | no |
 | <a name="input_delimiter"></a> [delimiter](#input\_delimiter) | Delimiter to be used between ID elements.<br/>Defaults to `-` (hyphen). Set to `""` to use no delimiter at all. | `string` | `null` | no |
 | <a name="input_descriptor_formats"></a> [descriptor\_formats](#input\_descriptor\_formats) | Describe additional descriptors to be output in the `descriptors` output map.<br/>Map of maps. Keys are names of descriptors. Values are maps of the form<br/>`{<br/>  format = string<br/>  labels = list(string)<br/>}`<br/>(Type is `any` so the map values can later be enhanced to provide additional options.)<br/>`format` is a Terraform format string to be passed to the `format()` function.<br/>`labels` is a list of labels, in order, to pass to `format()` function.<br/>Label values will be normalized before being passed to `format()` so they will be<br/>identical to how they appear in `id`.<br/>Default is `{}` (`descriptors` output will be empty). | `any` | `{}` | no |
 | <a name="input_enabled"></a> [enabled](#input\_enabled) | Set to false to prevent the module from creating any resources | `bool` | `null` | no |
