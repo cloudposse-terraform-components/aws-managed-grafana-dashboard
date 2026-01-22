@@ -114,7 +114,7 @@ recommended Atmos-native approach as it enables:
 
 - **Deep merging**: Compose dashboards from multiple stack layers
 - **Inheritance**: Define base dashboard configurations and extend them
-- **Atmos functions**: Use `!terraform.output`, `!atmos.component`, and other Atmos template functions
+- **Atmos functions**: Use `!terraform.output`, `!terraform.state`, and other Atmos template functions
 
 ```yaml
 components:
