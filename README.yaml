@@ -11,9 +11,20 @@ usage: |-
   > This component requires **OpenTofu 1.7+** or **Terraform 1.9+** for the `templatestring()` function.
   > Earlier versions will encounter errors like `Function not found: templatestring`.
 
+  ## Dashboard Configuration Methods
+
+  This component supports three mutually exclusive methods for providing dashboard configuration.
+  **Exactly one** of `dashboard_url`, `dashboard_file`, or `dashboard_yaml` must be set.
+
+  | Method | Use Case |
+  |--------|----------|
+  | `dashboard_url` | Load dashboards from remote URLs (e.g., Grafana marketplace) |
+  | `dashboard_file` | Load dashboards from local JSON files in the `dashboards/` directory |
+  | `dashboard_yaml` | Define dashboards inline in Atmos stack configuration using YAML |
+
   ### Loading a Dashboard from URL
 
-  Here's an example snippet for loading a dashboard from the Grafana marketplace.
+  Use `dashboard_url` to load a dashboard from a remote endpoint such as the Grafana marketplace.
 
   ```yaml
   components:
@@ -33,7 +44,7 @@ usage: |-
 
   ### Loading a Dashboard from Local File
 
-  You can also load dashboards from local JSON files stored in the `dashboards/` directory within the component.
+  Use `dashboard_file` to load dashboards from local JSON files stored in the `dashboards/` directory within the component.
 
   ```yaml
   components:
@@ -51,10 +62,156 @@ usage: |-
             "${DS_CLOUDWATCH}": "acme-plat-ue2-sandbox-cloudwatch"
   ```
 
+  ### Defining a Dashboard with YAML (Atmos Native)
+
+  Use `dashboard_yaml` to define the dashboard configuration directly in your Atmos stack files. This is the
+  recommended Atmos-native approach as it enables:
+
+  - **Deep merging**: Compose dashboards from multiple stack layers
+  - **Inheritance**: Define base dashboard configurations and extend them
+  - **Atmos functions**: Use `!terraform.output`, `!terraform.state`, and other Atmos template functions
+
+  ```yaml
+  components:
+    terraform:
+      grafana/dashboard/custom:
+        metadata:
+          component: managed-grafana/dashboard
+        vars:
+          enabled: true
+          name: "custom-dashboard"
+          grafana_component_name: grafana
+          grafana_api_key_component_name: grafana/api-key
+          dashboard_yaml:
+            annotations:
+              list:
+                - builtIn: 1
+                  datasource:
+                    type: grafana
+                    uid: "-- Grafana --"
+                  enable: true
+                  hide: true
+                  iconColor: "rgba(0, 211, 255, 1)"
+                  name: Annotations & Alerts
+                  type: dashboard
+            editable: true
+            fiscalYearStartMonth: 0
+            graphTooltip: 0
+            panels:
+              - datasource:
+                  type: cloudwatch
+                  uid: "${DS_CLOUDWATCH}"
+                fieldConfig:
+                  defaults:
+                    color:
+                      mode: palette-classic
+                    thresholds:
+                      mode: absolute
+                      steps:
+                        - color: green
+                          value: null
+                        - color: red
+                          value: 80
+                  overrides: []
+                gridPos:
+                  h: 8
+                  w: 12
+                  x: 0
+                  y: 0
+                id: 1
+                options:
+                  legend:
+                    calcs: []
+                    displayMode: list
+                    placement: bottom
+                    showLegend: true
+                  tooltip:
+                    mode: single
+                    sort: none
+                targets:
+                  - datasource:
+                      type: cloudwatch
+                      uid: "${DS_CLOUDWATCH}"
+                    dimensions:
+                      ClusterName: my-cluster
+                    expression: ""
+                    id: ""
+                    matchExact: true
+                    metricEditorMode: 0
+                    metricName: CPUUtilization
+                    metricQueryType: 0
+                    namespace: AWS/ECS
+                    period: ""
+                    queryMode: Metrics
+                    refId: A
+                    region: default
+                    statistic: Average
+                title: ECS CPU Utilization
+                type: timeseries
+            refresh: ""
+            schemaVersion: 39
+            templating:
+              list: []
+            time:
+              from: now-6h
+              to: now
+            timepicker: {}
+            timezone: browser
+          config_input:
+            "${DS_CLOUDWATCH}": "acme-plat-ue2-sandbox-cloudwatch"
+  ```
+
+  #### Using Inheritance with `dashboard_yaml`
+
+  Define a base dashboard in your catalog and extend it in environment-specific stacks:
+
+  ```yaml
+  # stacks/catalog/grafana/dashboards/base.yaml
+  components:
+    terraform:
+      grafana/dashboard/base:
+        metadata:
+          component: managed-grafana/dashboard
+          type: abstract
+        vars:
+          grafana_component_name: grafana
+          grafana_api_key_component_name: grafana/api-key
+          dashboard_yaml:
+            editable: true
+            schemaVersion: 39
+            time:
+              from: now-6h
+              to: now
+            timezone: browser
+  ```
+
+  ```yaml
+  # stacks/orgs/acme/plat/sandbox/us-east-2/grafana.yaml
+  import:
+    - catalog/grafana/dashboards/base
+
+  components:
+    terraform:
+      grafana/dashboard/ecs-metrics:
+        metadata:
+          component: managed-grafana/dashboard
+          inherits:
+            - grafana/dashboard/base
+        vars:
+          enabled: true
+          name: "ecs-metrics"
+          dashboard_yaml:
+            panels:
+              - title: ECS CPU
+                type: timeseries
+                # ... panel configuration
+  ```
+
   ### Variable Substitution
 
   The `config_input` variable accepts a map of string replacements. These are applied using the `templatestring()` function,
-  which replaces `${VAR}` placeholders in the dashboard JSON with the corresponding values.
+  which replaces `${VAR}` placeholders in the dashboard configuration with the corresponding values. This works with all
+  three dashboard configuration methods.
 
   <!-- prettier-ignore-start -->
   <!-- prettier-ignore-end -->
