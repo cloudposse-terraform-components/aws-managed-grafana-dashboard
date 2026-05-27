@@ -213,6 +213,32 @@ usage: |-
   which replaces `${VAR}` placeholders in the dashboard configuration with the corresponding values. This works with all
   three dashboard configuration methods.
 
+  ### Organizing Dashboards into Folders
+
+  Use the optional `folder` variable to save the dashboard into a specific Grafana folder. It accepts the
+  numeric id or the UID of the folder (see the provider's
+  [`grafana_dashboard`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/dashboard) resource).
+  When left empty (the default), the dashboard is saved in the General (root) folder.
+
+  Because the folder UID is just a string, it can be sourced from the output of a component that manages the
+  folder using Atmos functions, keeping folder ownership in one place:
+
+  ```yaml
+  components:
+    terraform:
+      grafana/dashboard/ecs:
+        metadata:
+          component: managed-grafana/dashboard
+        vars:
+          enabled: true
+          name: "ecs-dashboard"
+          grafana_component_name: grafana
+          grafana_api_key_component_name: grafana/api-key
+          dashboard_file: "ecs.json"
+          # Pull the folder UID from a component that manages Grafana folders
+          folder: !terraform.output grafana/folder/platform {{ .stack }} uid
+  ```
+
   <!-- prettier-ignore-start -->
   <!-- prettier-ignore-end -->
 references:
