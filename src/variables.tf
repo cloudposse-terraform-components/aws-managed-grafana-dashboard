@@ -45,6 +45,12 @@ variable "dashboard_yaml" {
   }
 }
 
+variable "folder" {
+  type        = string
+  description = "The id or UID of the folder to save the dashboard in. When null, the dashboard is saved in the General (root) folder. This can be supplied from another component's output using Atmos functions (e.g. a Grafana folder component)."
+  default     = null
+}
+
 variable "additional_config" {
   type        = map(any)
   description = "Additional dashboard configuration to be merged with the provided dashboard JSON"

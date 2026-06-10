@@ -219,6 +219,32 @@ The `config_input` variable accepts a map of string replacements. These are appl
 which replaces `${VAR}` placeholders in the dashboard configuration with the corresponding values. This works with all
 three dashboard configuration methods.
 
+### Organizing Dashboards into Folders
+
+Use the optional `folder` variable to save the dashboard into a specific Grafana folder. It accepts the
+numeric id or the UID of the folder (see the provider's
+[`grafana_dashboard`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/dashboard) resource).
+When left unset (the default), the dashboard is saved in the General (root) folder.
+
+Because the folder UID is just a string, it can be sourced from the output of a component that manages the
+folder using Atmos functions, keeping folder ownership in one place:
+
+```yaml
+components:
+  terraform:
+    grafana/dashboard/ecs:
+      metadata:
+        component: managed-grafana/dashboard
+      vars:
+        enabled: true
+        name: "ecs-dashboard"
+        grafana_component_name: grafana
+        grafana_api_key_component_name: grafana/api-key
+        dashboard_file: "ecs.json"
+        # Pull the folder UID from a component that manages Grafana folders
+        folder: !terraform.output grafana/folder/platform {{ .stack }} uid
+```
+
 <!-- prettier-ignore-start -->
 <!-- prettier-ignore-end -->
 
@@ -246,8 +272,8 @@ three dashboard configuration methods.
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_config_json"></a> [config\_json](#module\_config\_json) | cloudposse/config/yaml//modules/deepmerge | 1.0.2 |
-| <a name="module_grafana"></a> [grafana](#module\_grafana) | cloudposse/stack-config/yaml//modules/remote-state | 1.8.0 |
-| <a name="module_grafana_api_key"></a> [grafana\_api\_key](#module\_grafana\_api\_key) | cloudposse/stack-config/yaml//modules/remote-state | 1.8.0 |
+| <a name="module_grafana"></a> [grafana](#module\_grafana) | cloudposse/stack-config/yaml//modules/remote-state | 2.0.0 |
+| <a name="module_grafana_api_key"></a> [grafana\_api\_key](#module\_grafana\_api\_key) | cloudposse/stack-config/yaml//modules/remote-state | 2.0.0 |
 | <a name="module_iam_roles"></a> [iam\_roles](#module\_iam\_roles) | ../../account-map/modules/iam-roles | n/a |
 | <a name="module_this"></a> [this](#module\_this) | cloudposse/label/null | 0.25.0 |
 
@@ -276,6 +302,7 @@ three dashboard configuration methods.
 | <a name="input_descriptor_formats"></a> [descriptor\_formats](#input\_descriptor\_formats) | Describe additional descriptors to be output in the `descriptors` output map.<br/>Map of maps. Keys are names of descriptors. Values are maps of the form<br/>`{<br/>  format = string<br/>  labels = list(string)<br/>}`<br/>(Type is `any` so the map values can later be enhanced to provide additional options.)<br/>`format` is a Terraform format string to be passed to the `format()` function.<br/>`labels` is a list of labels, in order, to pass to `format()` function.<br/>Label values will be normalized before being passed to `format()` so they will be<br/>identical to how they appear in `id`.<br/>Default is `{}` (`descriptors` output will be empty). | `any` | `{}` | no |
 | <a name="input_enabled"></a> [enabled](#input\_enabled) | Set to false to prevent the module from creating any resources | `bool` | `null` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | ID element. Usually used for region e.g. 'uw2', 'us-west-2', OR role 'prod', 'staging', 'dev', 'UAT' | `string` | `null` | no |
+| <a name="input_folder"></a> [folder](#input\_folder) | The id or UID of the folder to save the dashboard in. When null, the dashboard is saved in the General (root) folder. This can be supplied from another component's output using Atmos functions (e.g. a Grafana folder component). | `string` | `null` | no |
 | <a name="input_grafana_api_key_component_name"></a> [grafana\_api\_key\_component\_name](#input\_grafana\_api\_key\_component\_name) | The name of the component used to provision an Amazon Managed Grafana API key | `string` | `"managed-grafana/api-key"` | no |
 | <a name="input_grafana_component_name"></a> [grafana\_component\_name](#input\_grafana\_component\_name) | The name of the component used to provision an Amazon Managed Grafana workspace | `string` | `"managed-grafana/workspace"` | no |
 | <a name="input_id_length_limit"></a> [id\_length\_limit](#input\_id\_length\_limit) | Limit `id` to this many characters (minimum 6).<br/>Set to `0` for unlimited length.<br/>Set to `null` for keep the existing setting, which defaults to `0`.<br/>Does not affect `id_full`. | `number` | `null` | no |

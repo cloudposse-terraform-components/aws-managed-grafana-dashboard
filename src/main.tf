@@ -54,4 +54,5 @@ resource "grafana_dashboard" "this" {
   count = local.enabled ? 1 : 0
 
   config_json = local.config_json
+  folder      = var.folder
 }
